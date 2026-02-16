@@ -14,6 +14,37 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 from reportlab.lib import colors
 
+# ==========================================
+# 🔒 合言葉（パスワード）の設定
+# ==========================================
+# 以下の "shiroishi" の部分を好きな文字に変えると、合言葉を変更できます。
+SECRET_PASSWORD = "shiroishi"
+
+def check_password():
+    """合言葉をチェックする画面の仕組み"""
+    def password_entered():
+        if st.session_state["password"] == SECRET_PASSWORD:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # パスワードを記憶させない
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        st.markdown("<h2 style='text-align: center; margin-top: 100px; color: #31333F;'>🔒 白石シフト作成アプリ</h2>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input("合言葉を入力して、キーボードの「確定（Enter）」を押してください", type="password", on_change=password_entered, key="password")
+        return False
+    elif not st.session_state["password_correct"]:
+        st.markdown("<h2 style='text-align: center; margin-top: 100px; color: #31333F;'>🔒 白石シフト作成アプリ</h2>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.text_input("合言葉を入力して、キーボードの「確定（Enter）」を押してください", type="password", on_change=password_entered, key="password")
+            st.error("😕 合言葉が違います。もう一度お試しください。")
+        return False
+    else:
+        return True
+
 # --- PDF作成関数 ---
 def create_shiroishi_pdf(year, month, schedule, prev_history, holidays):
     buffer = io.BytesIO()
@@ -120,6 +151,10 @@ def create_shiroishi_pdf(year, month, schedule, prev_history, holidays):
 # --- アプリ本体 ---
 def run_app():
     st.set_page_config(layout="wide", page_title="白石シフト作成")
+    
+    # 🔒 ここで合言葉をチェック！合っていなければ画面を表示しない
+    if not check_password():
+        st.stop()
     
     # CSS: V45 (完成版デザイン・ロック済)
     st.markdown("""
